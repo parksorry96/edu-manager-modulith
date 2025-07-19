@@ -1,0 +1,295 @@
+# ================================
+# EduManager Modulith .gitignore
+# ================================
+
+# ================================
+# Environment Variables & Secrets
+# ================================
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+
+# Application secrets
+application-local.yml
+application-dev.yml
+application-prod.yml
+*-secret.yml
+*-secrets.yml
+
+# ================================
+# Java & Spring Boot
+# ================================
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# JAR files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Class files
+*.class
+
+# Spring Boot specific
+spring-boot-*.log
+application-*.log
+
+# ================================
+# IDE & Editor Files
+# ================================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# ================================
+# Operating System Files
+# ================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ================================
+# Database Files
+# ================================
+# H2 Database
+*.db
+*.trace.db
+*.lock.db
+
+# SQLite
+*.sqlite
+*.sqlite3
+
+# ================================
+# Log Files
+# ================================
+logs/
+*.log
+log/
+*.log.*
+*.gz
+*.tmp
+
+# Logback
+logback.xml
+logback-spring.xml
+
+# ================================
+# Docker & Container Files
+# ================================
+# Docker volumes data
+docker-data/
+volumes/
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# ================================
+# Upload & Generated Files
+# ================================
+uploads/
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Generated documentation
+docs/generated/
+documentation/generated/
+
+# ================================
+# Test Files
+# ================================
+# Test output
+**/test-results/
+**/coverage/
+*.coverage
+.nyc_output
+
+# JUnit
+junit.xml
+TEST-*.xml
+
+# ================================
+# Node.js & Frontend (if applicable)
+# ================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# ================================
+# Cache & Package Managers
+# ================================
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Yarn
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# NPM
+.npm
+
+# ================================
+# Backup & Archive Files
+# ================================
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+
+# ================================
+# SSL/TLS Certificates
+# ================================
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+keystore.jks
+truststore.jks
+
+# ================================
+# Monitoring & APM
+# ================================
+# New Relic
+newrelic.yml
+
+# Application Insights
+ApplicationInsights.xml
+
+# ================================
+# Cloud Provider Specific
+# ================================
+# AWS
+.aws/
+aws-exports.js
+
+# Google Cloud
+gcloud/
+.gcp/
+
+# Azure
+.azure/
+
+# ================================
+# Development Tools
+# ================================
+# JProfiler
+*.jprofiler
+
+# JetBrains specific
+.jpb/
+
+# SonarQube
+.sonar/
+.scannerwork/
+
+# ================================
+# Custom Project Specific
+# ================================
+# EduManager specific uploads
+student-photos/
+documents/
+reports/
+exports/
+
+# Cache directories
+.cache/
+cache/
+
+# Generated API documentation
+api-docs/
+swagger-ui/
+
+.claude/
