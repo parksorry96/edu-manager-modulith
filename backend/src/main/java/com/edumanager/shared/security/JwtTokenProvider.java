@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -23,6 +24,7 @@ public class JwtTokenProvider {
     private final SecretKey key;
     private final long tokenValidityInMilliseconds;
 
+
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.expiration}") long tokenValidityInMilliseconds){
@@ -32,17 +34,18 @@ public class JwtTokenProvider {
     }
 
     public String createToken(Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
         Date now = new Date();
         Date validity = new Date(now.getTime() + tokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .subject(user.getUsername()) //토큰제목
-                .claim("userId", user.getId())
-                .claim("role", user.getRole().name())
-                .claim("name", user.getName())
-                .issuedAt(now)   //발급시간
-                .expiration(validity)        //만료시간
+                .subject(userDetails.getUsername())         // 토큰 제목 (사용자명)
+                .claim("userId", getUserId(userDetails))    // 사용자 ID (별도 메서드로 추출)
+                .claim("role", getRole(userDetails))        // 사용자 역할
+                .claim("name", getName(userDetails))        // 사용자 실명
+                .issuedAt(now)                              // 발급 시간
+                .expiration(validity)                       // 만료 시간
                 .signWith(key)    //서명  -> JJWT 업그레이드에 따라서 알고리즘 자동선택
                 .compact();
     }
@@ -105,6 +108,81 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    /**
+     * UserDetails에서 사용자 ID 추출
+     * CustomUserPrincipal인 경우 userId 반환, 아니면 예외 발생
+     */
+    private Long getUserId(UserDetails userDetails) {
+        if (userDetails instanceof CustomUserPrincipal) {
+            return ((CustomUserPrincipal) userDetails).getUserId();
+        }
+        throw new IllegalArgumentException("지원하지 않는 UserDetails 타입입니다.");
+    }
+
+    /**
+     * UserDetails에서 사용자 역할 추출
+     */
+    private String getRole(UserDetails userDetails) {
+        if (userDetails instanceof CustomUserPrincipal) {
+            return ((CustomUserPrincipal) userDetails).getRole().name();
+        }
+        throw new IllegalArgumentException("지원하지 않는 UserDetails 타입입니다.");
+    }
+
+    /**
+     * UserDetails에서 사용자 실명 추출
+     */
+    private String getName(UserDetails userDetails) {
+        if (userDetails instanceof CustomUserPrincipal) {
+            return ((CustomUserPrincipal) userDetails).getName();
+        }
+        throw new IllegalArgumentException("지원하지 않는 UserDetails 타입입니다.");
+    }
+
+    public String createAccessToken(Long userId, String email, com.edumanager.shared.domain.enums.UserRole
+            role) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + tokenValidityInMilliseconds);
+
+        return Jwts.builder()
+                .subject(email)                         // 토큰 제목 (이메일)
+                .claim("userId", userId)                // 사용자 ID
+                .claim("role", role.name())             // 사용자 역할
+                .claim("email", email)                  // 이메일 (중복이지만 명시적으로)
+                .issuedAt(now)                          // 발급 시간
+                .expiration(validity)                   // 만료 시간
+                .signWith(key)                          // 서명
+                .compact();
+    }
+
+    /**
+     * 토큰 만료 시간 반환 (밀리초)
+     * @return 토큰 만료 시간
+     */
+    public long getAccessTokenExpiration() {
+        return tokenValidityInMilliseconds;
+    }
+
+    /**
+     * 토큰에서 사용자 ID 추출
+     * @param token JWT 토큰
+     * @return 사용자 ID
+     */
+    public Long getUserIdFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("userId", Long.class);
+    }
+
+    /**
+     * 토큰에서 사용자 역할 추출
+     * @param token JWT 토큰
+     * @return 사용자 역할
+     */
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("role", String.class);
     }
 
 }

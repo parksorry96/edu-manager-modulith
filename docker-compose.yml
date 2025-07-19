@@ -53,6 +53,7 @@ services:
     image: confluentinc/cp-kafka:7.6.0
     container_name: edu-manager-kafka
     restart: unless-stopped
+    user: "0:0"  # root 권한으로 실행
     ports:
       - "${KAFKA_PORT:-9092}:9092"
       - "9101:9101"
@@ -69,12 +70,12 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
     volumes:
-      - kafka_data:/tmp/kraft-combined-logs
+      - kafka_data:/var/lib/kafka/data
     networks:
       - edu-manager-network
 

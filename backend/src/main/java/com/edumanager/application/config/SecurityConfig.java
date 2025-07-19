@@ -5,6 +5,7 @@ import com.edumanager.shared.security.JwtAuthenticationEntryPoint;
 import com.edumanager.shared.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 @Configuration
+@ComponentScan
 @EnableWebSecurity          //Spring Security 활성화
 @EnableMethodSecurity       //@PreAuthorize, @PostAuthorize 등 메서드 레벨 보안 활성화
 @RequiredArgsConstructor    // final 필드 자동 생성자 주입
@@ -63,14 +65,15 @@ public class SecurityConfig {
                         auth
                                 // 인증 없이 접근 가능한 경로
                                 .requestMatchers(
-                                        "/api/auth/login",
-                                        "/api/auth/signup",
-                                        "/api/auth/refresh",
+                                        "/api/auth/**",              // 로그인, 로그아웃 등 인증 관련
+                                        "/api/users/signup/**",      // 회원가입 관련
+                                        "/api/users/check-email",    // 이메일 중복 확인
+                                        "/api/dev/**",               // 개발/테스트용 API
                                         "/api/health",
+                                        "/actuator/health",          // 헬스체크
                                         "/error",
-                                        "/swagger-ui/**",   //Swagger UI
-                                        "/v3/api-docs/**"   //Swagger 문서
-
+                                        "/swagger-ui/**",            // Swagger UI
+                                        "/v3/api-docs/**"            // Swagger 문서
                                 ).permitAll()
                                 // 관리자 전용 API
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

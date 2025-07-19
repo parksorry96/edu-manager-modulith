@@ -5,7 +5,8 @@ package com.edumanager.shared.security;
 // 401 응답을 우리 형식으로 커스터마이징
 
 
-import com.edumanager.shared.dto.response.ErrorResponse;
+import com.edumanager.shared.dto.response.ApiResponse;
+import com.edumanager.shared.dto.response.FailureResponse;
 import com.edumanager.shared.exception.ErrorCode;
 import com.edumanager.shared.security.exception.InvalidTokenException;
 import com.edumanager.shared.security.exception.TokenExpiredException;
@@ -47,8 +48,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);    // 401 상태 코드
 
         // 에러 응답 객체 생성 및 JSON으로 변환하여 응답
-        ErrorResponse errorResponse = ErrorResponse.of(errorCode);
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        ApiResponse<Void> apiResponse = FailureResponse.of(errorCode);
+        response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 
 }

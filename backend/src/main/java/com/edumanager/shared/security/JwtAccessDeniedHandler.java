@@ -1,7 +1,8 @@
 package com.edumanager.shared.security;
 
 
-import com.edumanager.shared.dto.response.ErrorResponse;
+import com.edumanager.shared.dto.response.ApiResponse;
+import com.edumanager.shared.dto.response.FailureResponse;
 import com.edumanager.shared.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -27,15 +28,15 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
         //현재 인증된 사용자 정보 가져오기
-        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
-        if(auth !=null && auth.isAuthenticated()){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
             log.warn("Access Denied - USER{}(roles:{}), Request URI: {}, Method: {}",
                     auth.getName(),
                     auth.getAuthorities(),
                     request.getRequestURI(),
                     request.getMethod()
             );
-        } else{
+        } else {
             log.warn("Access Denied, Request URI :{}", request.getRequestURI());
         }
 
@@ -44,7 +45,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);       // 403 상태 코드
 
         // 에러 응답 생성 및 전송
-        ErrorResponse errorResponse = ErrorResponse.of(ErrorCode.ACCESS_DENIED);
+        ApiResponse<Void> errorResponse = FailureResponse.of(ErrorCode.ACCESS_DENIED);
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
 }

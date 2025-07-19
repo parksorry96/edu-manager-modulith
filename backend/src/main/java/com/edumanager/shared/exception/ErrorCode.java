@@ -96,7 +96,51 @@ public enum ErrorCode {
     EMAIL_SEND_FAILED(500, "E002", "이메일 전송에 실패했습니다"),
 
     // 외부 API 호출 실패 (500 Internal Server Error)
-    EXTERNAL_API_ERROR(500, "E003", "외부 API 호출 중 오류가 발생했습니다");
+    EXTERNAL_API_ERROR(500, "E003", "외부 API 호출 중 오류가 발생했습니다"),
+
+    /* ==================== User Domain Errors (U로 시작) ==================== */
+    // 사용자를 찾을 수 없을 때 (404 Not Found)
+    USER_NOT_FOUND(404, "U001", "사용자를 찾을 수 없습니다"),
+
+    // 이메일 중복 시 (409 Conflict)
+    USER_EMAIL_ALREADY_EXISTS(409, "U002", "이미 사용 중인 이메일입니다"),
+
+    // 전화번호 중복 시 (409 Conflict)
+    USER_PHONE_ALREADY_EXISTS(409, "U003", "이미 사용 중인 전화번호입니다"),
+
+    // 비밀번호 길이 부족 (400 Bad Request)
+    USER_PASSWORD_TOO_SHORT(400, "U004", "비밀번호는 최소 8자 이상이어야 합니다"),
+
+    // 비밀번호 패턴 불일치 (400 Bad Request)
+    USER_PASSWORD_INVALID_PATTERN(400, "U005", "비밀번호는 영문과 숫자를 포함해야 합니다"),
+
+    // 이름 유효성 검증 실패 (400 Bad Request)
+    USER_NAME_INVALID(400, "U006", "이름은 2자 이상 50자 이하여야 합니다"),
+
+    // 학생 역할 회원가입 시 초대코드 누락 (400 Bad Request)
+    STUDENT_INVITE_CODE_REQUIRED(400, "U007", "학생 회원가입에는 초대코드가 필요합니다"),
+
+    // 계정 비활성화 상태 (403 Forbidden)
+    USER_ACCOUNT_DISABLED(403, "U008", "비활성화된 계정입니다"),
+
+    // 이메일 인증 필요 (403 Forbidden)
+    USER_EMAIL_NOT_VERIFIED(403, "U009", "이메일 인증이 필요합니다"),
+
+    /* ==================== Invite Code Errors (I로 시작) ==================== */
+    // 초대코드를 찾을 수 없을 때 (404 Not Found)
+    INVITE_CODE_NOT_FOUND(404, "I001", "초대코드를 찾을 수 없습니다"),
+
+    // 유효하지 않은 초대코드 (400 Bad Request)
+    INVITE_CODE_INVALID_OR_USED(400, "I002", "유효하지 않거나 이미 사용된 초대코드입니다"),
+
+    // 만료된 초대코드 (400 Bad Request)
+    INVITE_CODE_EXPIRED(400, "I003", "만료된 초대코드입니다"),
+
+    // 초대코드 사용 한도 초과 (409 Conflict)
+    INVITE_CODE_USAGE_EXCEEDED(409, "I004", "초대코드 사용 한도를 초과했습니다"),
+
+    // 초대코드 생성 실패 (500 Internal Server Error)
+    INVITE_CODE_GENERATION_FAILED(500, "I005", "초대코드 생성에 실패했습니다");
 
     // HTTP 상태 코드를 저장하는 필드
     private final int status;

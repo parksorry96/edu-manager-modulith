@@ -1,6 +1,7 @@
 package com.edumanager.shared.security;
 
 
+import com.edumanager.shared.domain.enums.UserRole;
 import com.edumanager.shared.security.exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -18,17 +19,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Component
 @Slf4j
 @RequiredArgsConstructor
-@Component
 //한 번만 실행되는 필터
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     //JWT 토큰 관련 작업을 처리
     private final JwtTokenProvider jwtTokenProvider;
 
-    // 사용자가 정보를 조회하기 위한 레포지토리
-    private final UserRepository userRepository;
 
     // OncePerRequestFilter 의 추상 메서드 구현
     // 모든 HTTP 요청마다 한 번씩 실행되는 필터 메소드
@@ -43,22 +42,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 2. 토큰 검증
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
 
-                // 3. 토큰에서 이메일 추출
-                String email= jwtTokenProvider.getEmailFromToken(token);
                 // Claims 로 더 많은 정보 추출
                 Claims claims = jwtTokenProvider.getClaims(token);
 
                 Long userId = claims.get("userId", Long.class);
-                String role = claims.get("role", String.class);
+                String username = claims.getSubject();
+                String name = claims.get("name", String.class);
+                String roleString = claims.get("role", String.class);
 
-                // 4. 사용자 조회
-                User user = userRepository.findByEmail(email)
-                        .orElseThrow(() -> new InvalidTokenException("사용자를 찾을 수 없습니다."));
+                UserRole role;
+                try{
+                    role= UserRole.valueOf(roleString);
+                }catch (IllegalArgumentException e){
+                    log.error("유효하지 않은 사용자 : {}", roleString);
+                    throw new InvalidTokenException("유효하지 않은 사용자 역할입니다.");
+                }
+
+                //db조회 없이 객체생성
+                CustomUserPrincipal userPrincipal = new CustomUserPrincipal(userId, username, name, role);
 
                 // 5. 인증 객체 생성 및 SecurityContext 설정
-                Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                Authentication authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
+                log.debug("JWT 인증성공 username : {}", username);
             }
         }catch(Exception e){
             log.error("JWT 인증 과정에서 오류 발생 : {}", e.getMessage());
