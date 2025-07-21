@@ -4,14 +4,11 @@ import com.edumanager.shared.domain.enums.UserRole;
 import com.edumanager.shared.exception.BusinessException;
 import com.edumanager.shared.exception.ErrorCode;
 import com.edumanager.shared.infrastructure.messaging.EventPublisher;
-import com.edumanager.student.domain.entity.Student;
 import com.edumanager.user.application.dto.request.StudentSignupRequest;
 import com.edumanager.user.application.dto.response.UserSignupResponse;
 import com.edumanager.user.application.mapper.UserMapper;
-import com.edumanager.user.domain.entity.InviteCode;
 import com.edumanager.user.domain.entity.User;
 import com.edumanager.user.domain.event.UserRegisteredEvent;
-import com.edumanager.user.domain.repository.InviteCodeRepository;
 import com.edumanager.user.domain.repository.UserRepository;
 import com.edumanager.user.domain.service.InviteCodeService;
 
@@ -36,23 +33,21 @@ public class UserService {
     public UserSignupResponse registerStudentWithInviteCode(StudentSignupRequest request){
         validateRegistrationData(request.email(),request.password(),request.name());
 
-        Student targetStudent = inviteCodeService.getTargetStudentByInviteCode(
+        Long targetStudentId = inviteCodeService.getTargetStudentByInviteCode(
                 request.inviteCode(),
                 UserRole.STUDENT
         );
 
-        if(targetStudent!=null){
-            log.info("특정 학생용 초대코드 학생 : {}",targetStudent.getName());
+        if(targetStudentId !=null){
+            log.info("특정 학생용 초대코드 학생 : {}", targetStudentId);
         }else{
             log.info("일반 초대코드");
         }
-        User user = userMapper.toEntity(request);
-
-        user = User.builder()
-                .email(user.getEmail())
-                .password(passwordEncoder.encode(user.getPassword()))
-                .name(user.getName())
-                .phone(user.getPhone())
+        User user = User.builder()
+                .email(request.email())                    // 직접 request에서 가져오기
+                .password(passwordEncoder.encode(request.password())) // 직접 request에서 가져오기
+                .name(request.name())
+                .phone(request.phone())
                 .role(UserRole.STUDENT)
                 .academyId(1L)
                 .enabled(true)
@@ -72,7 +67,8 @@ public class UserService {
                 savedUser.getName(),
                 savedUser.getRole(),
                 savedUser.getAcademyId(),
-                usageResult.getUsedInviteCode().getId()
+                request.inviteCode(),
+                targetStudentId
         );
         eventPublisher.publish(event);
 
@@ -118,6 +114,7 @@ public class UserService {
                 savedUser.getName(),
                 savedUser.getRole(),
                 savedUser.getAcademyId(),
+                null,
                 null
         );
         eventPublisher.publish(event);

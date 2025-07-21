@@ -15,10 +15,12 @@ public record UserRegisteredEvent(
         String name,
         UserRole role,
         Long academyId,
+        String inviteCode,
+        Long targetStudentId,
         EventMetadata metadata
 
 ) implements DomainEvent {
-    public static UserRegisteredEvent of(Long userId, String email, String name, UserRole role, Long academyId, Long createdBy) {
+    public static UserRegisteredEvent of(Long userId, String email, String name, UserRole role, Long academyId,String inviteCode, Long targetStudentId) {
         return new UserRegisteredEvent(
                 UUID.randomUUID().toString(),
                 LocalDateTime.now(),
@@ -27,7 +29,9 @@ public record UserRegisteredEvent(
                 name,
                 role,
                 academyId,
-                EventMetadata.of(createdBy, "user-service")
+                inviteCode,
+                targetStudentId,
+                EventMetadata.of(userId, "user-service")
         );
     }
 

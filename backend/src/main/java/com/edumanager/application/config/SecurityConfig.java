@@ -3,7 +3,14 @@ package com.edumanager.application.config;
 import com.edumanager.shared.security.JwtAccessDeniedHandler;
 import com.edumanager.shared.security.JwtAuthenticationEntryPoint;
 import com.edumanager.shared.security.JwtAuthenticationFilter;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import io.jsonwebtoken.security.Jwk;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -14,12 +21,20 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 
 @Configuration
@@ -29,19 +44,14 @@ import java.util.Arrays;
 @RequiredArgsConstructor    // final 필드 자동 생성자 주입
 public class SecurityConfig {
 
-    //JWT 인증 필터
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    @Value("${jwt.public.key}")
+    private RSAPublicKey publicKey;
 
-    // 401 처리를 위한 EntryPoint
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    @Value("${jwt.private.key}")
+    private RSAPrivateKey privateKey;
 
-    // 403 처리를 위한 Handler
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+
     //    Spring Security 필터 체인 설정
 //    모든 보안 관련 설정을 여기서 정의
     @Bean
@@ -55,10 +65,15 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 예외 처리 설정
-                .exceptionHandling(exception ->
-                        exception
-                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)//401처리
-                                .accessDeniedHandler(jwtAccessDeniedHandler)          //403처리
+//                .exceptionHandling(exception ->
+//                        exception
+//                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)//401처리
+//                                .accessDeniedHandler(jwtAccessDeniedHandler)          //403처리
+//                )
+                .oauth2ResourceServer(oath2->oath2
+                        .jwt(jwt -> jwt
+                                .decoder(jwtDecoder())
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 )
                 // URL 별 접근 권한 설정
                 .authorizeHttpRequests(auth ->
@@ -88,13 +103,44 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
 
                 );
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
 
 
     }
 
+    @Bean
+    public JwtDecoder jwtDecoder()  {
+        return NimbusJwtDecoder.withPublicKey(this.publicKey).build();
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder()  {
+        Jwk jwk = new RSAKey.Builder(this.publicKey)
+                .privateKey(this.privateKey)
+                .build();
+
+        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+
+        return new NimbusJwtEncoder(jwks);
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("role");
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder(12);
+    }
 
 //    CORS 설정
 //    프론트엔드와의 통신을 위해 필요

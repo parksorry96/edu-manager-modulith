@@ -7,6 +7,10 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
@@ -15,18 +19,29 @@ import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 @EnableKafka                                    // Kafka 리스너 활성화
 @Configuration                                  // Spring 설정 클래스
 public class KafkaConfig {
+
+
 
     @Value("${spring.kafka.bootstrap-servers}")  // application.yml에서 부트스트랩 서버 주소 가져오기
     private String bootstrapServers;
 
     @Value("${spring.kafka.consumer.group-id}")  // 컨슈머 그룹 ID 가져오기
     private String groupId;
+
+    @Bean
+    public AsyncTaskExecutor virtualThreadTaskExecutor() {
+        SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("virtual-thread-");
+        executor.setVirtualThreads(true);  // Java 21의 가상 스레드 활성화
+        return executor;
+    }
 
     // Producer 설정을 위한 Properties 생성
     @Bean
@@ -80,6 +95,16 @@ public class KafkaConfig {
         // 자동 커밋 비활성화 (수동으로 처리 완료 확인)
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
+        // Poll timeout은 ConsumerConfig에서 설정
+        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000); // 5분
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000);    // 30초
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 10000); // 10초
+
+        // 가상 스레드에 적합한 설정
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);        // 한 번에 가져올 레코드 수
+        props.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 50000);       // 최소 페치 크기
+        props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 500);       // 최대 대기 시간
+
         // 키 역직렬화
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
@@ -100,19 +125,38 @@ public class KafkaConfig {
     }
 
     // Kafka 리스너 컨테이너 팩토리 설정
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
+    // 일반 스레드 - 빠른 처리용 (CPU 집약적 + 간단한 작업)
+    @Bean("standardKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, Object> standardKafkaListenerContainerFactory()
+    {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
 
-        // 위에서 설정한 컨슈머 팩토리 사용
         factory.setConsumerFactory(consumerFactory());
-
-        // 동시 처리할 리스너 컨테이너 수 (CPU 코어 수에 맞게 조정)
-        factory.setConcurrency(3);
-
-        // 수동 커밋 모드 설정 (메시지 처리 완료 후 수동으로 오프셋 커밋)
+        factory.setConcurrency(3); // CPU 코어 수에 맞게
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+
+        // 빠른 처리를 위한 설정
+        factory.getContainerProperties().setIdleEventInterval(60000L);
+
+        return factory;
+    }
+
+    // 가상 스레드 - I/O 집약적 작업용
+    @Bean("virtualThreadKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, Object>
+    virtualThreadKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory());
+        factory.setConcurrency(1); // 가상 스레드로 높은 동시성 처리
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setListenerTaskExecutor(virtualThreadTaskExecutor());
+
+        // I/O 대기 시간을 고려한 설정
+        factory.getContainerProperties().setIdleEventInterval(30000L);
+        factory.getContainerProperties().setLogContainerConfig(true);
 
         return factory;
     }

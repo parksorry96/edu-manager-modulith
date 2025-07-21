@@ -4,10 +4,7 @@ import com.edumanager.shared.domain.BaseTimeEntity;
 import com.edumanager.user.domain.enums.LoginType;
 import com.edumanager.shared.domain.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -47,11 +44,14 @@ public class User extends BaseTimeEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private LoginType loginType;
 
+
     @Column(nullable = false)
     private boolean enabled = true;
 
+
     @Column(nullable = false)
     private boolean emailVerified = false;
+
 
     @Column(nullable = false)
     private boolean phoneVerified = false;

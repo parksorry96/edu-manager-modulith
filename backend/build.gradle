@@ -43,17 +43,20 @@ dependencies {
 
     // ===== 새로 추가할 의존성들 =====
 
-    // JWT 라이브러리 (JJWT - Java JWT 최신 버전)
+    // Spring Security OAuth2 Resource Server (JWT 지원)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    
+    // JWT 라이브러리 (JJWT - 임시로 유지, 점진적 마이그레이션을 위해)
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-    // Swagger/OpenAPI 3 문서화
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+    // Swagger/OpenAPI 3 문서화  
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
     // MapStruct (Entity ↔ DTO 매핑)
     implementation 'org.mapstruct:mapstruct:1.6.3'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
     // Querydsl (복잡한 쿼리 작성용)
     implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
@@ -106,7 +109,10 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.springframework.modulith:spring-modulith-events-kafka'
+    
+    // 어노테이션 프로세서 순서 중요: Lombok 먼저, 그 다음 MapStruct
     annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
     // 테스트 의존성 강화
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -118,6 +124,14 @@ dependencies {
     testImplementation 'org.testcontainers:kafka'
     testImplementation 'com.h2database:h2' // 테스트용 인메모리 DB
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+
+    testImplementation 'org.springframework.modulith:spring-modulith-docs'
+    testImplementation 'org.springframework.modulith:spring-modulith-test'
+
+
+
+
 }
 
 // ===== Querydsl 설정 추가 =====
